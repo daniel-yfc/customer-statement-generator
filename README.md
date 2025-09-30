@@ -36,21 +36,30 @@
     ```
     應用程式將會在本機的 `http://localhost:3000` 上啟動。
 
-## 專案檔案結構 (Project File Structure)
+## 檔案結構 (Project File Structure)
 
 ```
-src/
-├── components/
-│   ├── CurrencyDisplay.tsx         # 可編輯的貨幣顯示元件
-│   ├── CustomerInfo.tsx            # 客戶資訊區塊元件
-│   ├── CustomerStatementGenerator.tsx  # 主頁面與核心邏輯元件
-│   ├── MileslinesSection.tsx       # 紡織助劑區塊元件
-│   ├── ToshinItemsModal.tsx        # 零組件品項參考彈出視窗元件
-│   └── ToshinSection.tsx           # 設備零組件區塊元件
-├── data.ts                         # 預設客戶與產品資料
-└── types.ts                        # 全域 TypeScript 型別定義
-```
-
+customer-statement-generator/
+├── public/
+│   ├── index.html
+│   ├── favicon.ico
+│   └── manifest.json
+├── src/
+│   ├── components/
+│       ├── CurrencyDisplay.tsx             # 貨幣顯示元件
+│       ├── CustomerInfo.tsx                # 客戶資訊區塊元件
+│       ├── CustomerStatementGenerator.tsx  # 主頁面與核心邏輯元件
+│       ├── MileslinesSection.tsx           # 紡織助劑區塊元件
+│       ├── ToshinItemsModal.tsx            # 零組件品項參考彈出視窗元件
+│       └── ToshinSection.tsx               # 設備零組件區塊元件
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
+├── package.json
+├── tsconfig.json
+└── README.md
+├── data.ts                                 # 預設客戶與產品資料
+└── types.ts                                # 全域 TypeScript 型別定義
 ## Getting Started
 
 ### Prerequisites
@@ -97,86 +106,7 @@ npm start
 npm run deploy
 ```
 
-## Project Structure
-
-```
-customer-statement-generator/
-├── public/
-│   ├── index.html
-│   ├── favicon.ico
-│   └── manifest.json
-├── src/
-│   ├── components/
-│   │   └── CustomerStatementGenerator.tsx
-│   ├── types/
-│   │   └── index.ts
-│   ├── App.tsx
-│   ├── index.tsx
-│   ├── App.css
-│   └── index.css
-├── .github/
-│   └── workflows/
-│       └── deploy.yml
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
-## Usage
-
-1. **Select Customer**: Choose from predefined customers or select "自行輸入" for custom input
-2. **Set Exchange Rate**: Update JPY to TWD conversion rate
-3. **Add Items**: 
-   - Toggle sections for different service types
-   - Add items with dates, descriptions, quantities, and prices
-4. **Generate Statement**: The totals calculate automatically
-5. **Print**: Use browser print function for professional A4 output
-
-## Customization
-
-### Adding New Customers
-
-Edit the `customerList` array in `src/components/CustomerStatementGenerator.tsx`:
-
-```typescript
-const customerList: Customer[] = [
-  { 
-    name: "New Customer Name", 
-    address: "Customer Address", 
-    taxId: "Tax ID", 
-    phone: "Phone Number" 
-  },
-  // ... existing customers
-];
-```
-
-### Adding New Products
-
-Edit the product arrays in the same file:
-
-```typescript
-const mileslinesProducts: MileslinesProduct[] = [
-  { description: 'New Product', price: 100 },
-  // ... existing products
-];
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## License
-
 This project is licensed under the MIT License.
 
-## Support
-
-If you encounter any issues or have questions, please open an issue on GitHub.
-
----
-
-© 2024 明誠股份有限公司 (MILESLINES CORPORATION)
+© 2025 Daniel Chen 

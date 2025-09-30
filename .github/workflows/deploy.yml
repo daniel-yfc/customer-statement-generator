@@ -1,0 +1,48 @@
+# .github/workflows/deploy.yml
+        
+        
+# Name of the GitHub Action workflow.
+name: Deploy React App to GitHub Pages
+
+# Controls when the action will run.
+# This workflow runs on pushes to the "main" branch.
+on:
+  push:
+    branches: [ "main" ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel.
+jobs:
+  # This job is named "build-and-deploy".
+  build-and-deploy:
+    # The type of runner that the job will run on.
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job.
+    steps:
+      # 1. Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Sets up Node.js in the runner environment.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Use a specific version of Node.js
+
+      # 3. Installs dependencies. 'npm ci' is faster and more reliable for CI/CD than 'npm install'.
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Builds the application for production.
+      # The PUBLIC_URL environment variable is set to match the homepage URL.
+      - name: Build application
+        run: npm run build
+        env:
+          PUBLIC_URL: /customer-statement-generator # Replace with your repository name                
+
+      # 5. Deploys the built application to the gh-pages branch.
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build # The directory the build command outputs to. Use './dist' if you are using Vite.        

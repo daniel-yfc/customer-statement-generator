@@ -1,4 +1,6 @@
 // src/types.ts
+// 存放所有共用的 TypeScript 型別定義
+
 export interface Customer {
   name: string;
   address: string;

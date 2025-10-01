@@ -3,51 +3,57 @@ import React, { useState } from 'react';
 
 interface Props {
   currency: string;
-  amount?: string | number;
+  amount?: string;
   isInput?: boolean;
   value?: number;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (value: number) => void;
   className?: string;
   formatNumber: (num: number) => string;
 }
 
-export const CurrencyDisplay: React.FC<Props> = ({ currency, amount, isInput, value, onChange, className = '', formatNumber }) => {
+export const CurrencyDisplay: React.FC<Props> = React.memo(({ currency, amount, isInput, value = 0, onChange, className = '', formatNumber }) => {
   const [isEditing, setIsEditing] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = parseInt(e.target.value, 10) || 0;
+    if (onChange) {
+      onChange(Math.max(0, newValue));
+    }
+  };
 
   if (isInput) {
     if (isEditing) {
       return (
-        <span className={`inline-flex items-center whitespace-nowrap ${className}`}>
-          <span className="text-gray-700 mr-1">{currency}</span>
+        <div className={`grid grid-cols-[min-content_1fr] gap-x-1 items-baseline text-right w-full ${className}`}>
+          <span className="text-gray-700">{currency}</span>
           <input
             type="number"
+            min="0"
+            step="1"
             className="bg-gray-50 border-gray-300 text-gray-900 text-base rounded-lg p-1 w-full text-right border"
             value={value}
-            onChange={onChange}
+            onChange={handleInputChange}
             onBlur={() => setIsEditing(false)}
             autoFocus
           />
-        </span>
+        </div>
       );
     }
     return (
-      <span
-        className={`inline-flex items-center whitespace-nowrap cursor-pointer p-1 rounded-lg hover:bg-gray-100 ${className}`}
+      <div
+        className={`grid grid-cols-[min-content_1fr] gap-x-1 items-baseline text-right w-full cursor-pointer p-1 rounded-lg hover:bg-gray-100 ${className}`}
         onClick={() => setIsEditing(true)}
-        onFocus={() => setIsEditing(true)}
-        tabIndex={0}
-        role="button"
       >
-        <span className="text-gray-700 mr-1">{currency}</span>
-        <span className="font-medium text-gray-800">{formatNumber(value || 0)}</span>
-      </span>
+        <span className="text-gray-700">{currency}</span>
+        <span className="font-medium text-gray-800">{formatNumber(value)}</span>
+      </div>
     );
   }
 
   return (
-    <span className={`inline-flex items-center whitespace-nowrap ${className}`}>
-      <span className="text-gray-700 mr-1">{currency}</span>
+    <div className={`grid grid-cols-[min-content_1fr] gap-x-1 items-baseline text-right w-full ${className}`}>
+      <span className="text-gray-700">{currency}</span>
       <span className="font-medium text-gray-800">{amount}</span>
-    </span>
+    </div>
   );
-};
+});

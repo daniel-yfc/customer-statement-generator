@@ -1,8 +1,9 @@
 // src/data.ts
+// 存放應用的靜態資料，如客戶列表和產品列表
 import { Customer, MileslinesProduct, ToshinService } from './types';
 
 export const customerList: Customer[] = [
-  { name: "英勤布業有限公司全興廠", address: "509004 彰化縣伸港鄉全興工業區工東一路41號", taxId: "23690554", phone: "(04) 797-8089" },
+  { name: "英勤布業有限公司", address: "509004 彰化縣伸港鄉全興工業區工東一路41號", taxId: "23690554", phone: "(04) 797-8089" },
   { name: "翔逸貿易股份有限公司", address: "334019 桃園市八德區大興路110號14樓", taxId: "04243774", phone: "(03) 218-3944" },
   { name: "富郁有限公司", address: "330477 桃園市桃園區龜山工業區興隆路9號", taxId: "83641467", phone: "(03) 362-5231" },
   { name: "華城有限公司", address: "333024 桃園市龜山區海華路16巷8之1號", taxId: "43783502", phone: "(03) 350-7016" },
@@ -23,25 +24,25 @@ export const mileslinesProducts: MileslinesProduct[] = [
   { description: '糊料 TA/8', price: 120 },
   { description: '糊料 EXBA', price: 150 },
   { description: '糊料 EX', price: 150 },
-  { description: '印花油', price: 280 },
-  { description: '印布油', price: 250 },
   { description: '糊料 PAN NEW', price: 90 },
   { description: '糊料 JOY/EXTRA', price: 70 },
+  { description: '印花油', price: 280 },
+  { description: '印布油', price: 250 },  
   { description: '自行輸入', price: 0 }
 ];
 
 export const toshinServices: ToshinService[] = [
   { category: "自動化控制", subCategory: "控制元件", item: "定位控制器", examples: ["SQC-5", "SQC-6", "SQC-T2"] },
   { category: "自動化控制", subCategory: "控制元件", item: "時序控制器", examples: ["UD-F70", "FX3G-24M", "NAiS KT4", "FRC100A-G02", "JAMSC-B2605", "JAMSC-C389", "JAMSC-B1090B"] },
-  { category: "自動化控制", subCategory: "控制元件", item: "運算模組", examples: ["JAMSC-B2605", "JAMSC-C389", "JAMSC-B1090B"] },
+  { category: "自動化控制", subCategory: "控制元件", item: "基本運算模組", examples: ["JAMSC-B2605", "JAMSC-C389", "JAMSC-B1090B"] },
   { category: "自動化控制", subCategory: "控制元件", item: "輸出/入模組", examples: ["Q01", "Q02U", "NC1P-EO", "DDSCR-U84S", "KZ-300", "KV-24AT", "FXIN-24MT"] },
-  { category: "自動化控制", subCategory: "控制元件", item: "類比模組", examples: ["JAMSC-B2603", "JAMSC-B2605", "JAMSC-B2833", "KZ-C32X", "JAMSC-B2110A"] },
-  { category: "自動化控制", subCategory: "控制元件", item: "通訊/網路模組", examples: ["Q64DAN", "JAMSC-B1054"] },
-  { category: "自動化控制", subCategory: "控制元件", item: "電源模組", examples: ["JAMSC-C8610", "QJG1BT 11N CC-Link", "FX2N-32CCL"] },
+  { category: "自動化控制", subCategory: "控制元件", item: "類比模組", examples: ["Q64DAN", "JAMSC-B1054"] },
+  { category: "自動化控制", subCategory: "控制元件", item: "通訊/網路模組", examples: ["JAMSC-C8610", "QJG1BT 11N CC-Link", "FX2N-32CCL"] },
+  { category: "自動化控制", subCategory: "控制元件", item: "電源模組", examples: ["Q62P", "S8VS-03024"] },
   { category: "自動化控制", subCategory: "控制元件", item: "伺服馬達(Servopack)", examples: ["SGDH-XXXX", "SGDV-XXXX", "SD2A-XXXX"] },
   { category: "自動化控制", subCategory: "控制元件", item: "人機介面(HMI)", examples: ["GP-4301", "GP-2400", "GT-1150"] },
-  { category: "自動化控制", subCategory: "控制元件", item: "操作開關與按鈕", examples: ["SB-2NB/21", "U-84S", "PUL-10A-10U"] },
-  { category: "自動化控制", subCategory: "控制元件", item: "變頻器", examples: ["FVR", "CIMR", "VF-S9", "FVR3 7E9S-2TS", "FRN3.7C1S-2TS"] },
+  { category: "自動化控制", subCategory: "控制元件", item: "操作開關、按鈕、端子台", examples: ["SB-2NB/21", "U-84S", "PUL-10A-10U"] },
+  { category: "自動化控制", subCategory: "控制元件", item: "變頻器、變壓器", examples: ["FVR", "CIMR", "VF-S9", "FVR3.7E9S-2TS", "FRN3.7C1S-2TS","FVR-E9S"] },
   { category: "自動化控制", subCategory: "控制元件", item: "繼電器、電磁接觸器", examples: ["HI-20EG"] },
   { category: "自動化控制", subCategory: "控制元件", item: "電纜線", examples: [] },
   { category: "自動化控制", subCategory: "控制元件", item: "端子台", examples: [] },  
@@ -79,3 +80,5 @@ export const toshinServices: ToshinService[] = [
   { category: "特殊項目", description: '運費', priceJPY: 0 },
   { category: "特殊項目", description: '自行輸入', priceJPY: 0 }
 ];
+
+

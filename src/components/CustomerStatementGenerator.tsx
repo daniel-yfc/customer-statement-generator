@@ -14,6 +14,7 @@ import utc from 'dayjs/plugin/utc';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { customerList, mileslinesProducts, toshinServices } from '../data';
 import '../fonts';
+import { MileslinesItem, ToshinItem } from '../types';
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -72,7 +73,27 @@ const CustomerStatementGenerator: React.FC = () => {
     }
   }, [dispatch]);
 
-  // --- Calculations ---
+  const handleMileslinesDescriptionChange = useCallback((index: number, description: string) => {
+    const product = mileslinesProducts.find(p => p.description === description);
+    const isCustom = description === '自行輸入';
+    dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field: 'description', value: description } });
+    dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field: 'isCustom', value: isCustom } });
+    if (product && !isCustom) {
+      dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field: 'price', value: product.price } });
+    }
+  }, [dispatch]);
+
+  const handleToshinDescriptionChange = useCallback((index: number, description: string) => {
+    const isShipping = description.startsWith('運費 >');
+    const isCustom = description === '自行輸入';
+    dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field: 'description', value: description } });
+    dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field: 'isShipping', value: isShipping } });
+    dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field: 'isCustom', value: isCustom } });
+    if (isShipping) {
+      dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field: 'shippingCarrier', value: description.split(' > ')[1] } });
+    }
+  }, [dispatch]);
+
   const formatNumber = (num: number): string => new Intl.NumberFormat('zh-TW').format(Math.round(num));
   const mileslinesSubtotal = useMemo(() => showMileslines ? mileslinesItems.reduce((sum, item) => sum + item.quantity * item.price, 0) : 0, [mileslinesItems, showMileslines]);
   const tax = useMemo(() => Math.round(mileslinesSubtotal * 0.05), [mileslinesSubtotal]);
@@ -135,83 +156,84 @@ const CustomerStatementGenerator: React.FC = () => {
           onCustomerDataChange={(field, value) => dispatch({ type: 'UPDATE_CUSTOMER_DATA', payload: { field, value }})}
         />
         
-        {showMileslines && <MileslinesSection 
-          items={mileslinesItems} 
-          products={mileslinesProducts} 
-          onAddItem={() => dispatch({ type: 'ADD_MILESLINES_ITEM' })}
-          onUpdateItem={(index, field, value) => dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field, value }})}
-          onRemoveItem={(index) => dispatch({ type: 'REMOVE_MILESLINES_ITEM', payload: index })}
-          onDescriptionChange={(index, description) => dispatch({ type: 'UPDATE_MILESLINES_DESCRIPTION', payload: { index, description } })}
-          formatNumber={formatNumber} 
-        />}
-        
-        {showToshin && <ToshinSection 
-          items={toshinItems} 
-          exchangeRate={exchangeRate} 
-          services={toshinServices} 
-          onAddItem={() => dispatch({ type: 'ADD_TOSHIN_ITEM' })}
-          onUpdateItem={(index, field, value) => dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field, value }})}
-          onRemoveItem={(index) => dispatch({ type: 'REMOVE_TOSHIN_ITEM', payload: index })}
-          onDescriptionChange={(index, description) => dispatch({ type: 'UPDATE_TOSHIN_DESCRIPTION', payload: { index, description } })}
-          onShowModal={() => dispatch({ type: 'SET_FIELD', payload: { field: 'showModal', value: true }})}
-          formatNumber={formatNumber} 
-          showTopBorder={showMileslines && mileslinesItems.length > 0} 
-        />}
+        {showMileslines && (
+          <MileslinesSection
+            items={mileslinesItems}
+            products={mileslinesProducts}
+            onAddItem={() => dispatch({ type: 'ADD_MILESLINES_ITEM' })}
+            onUpdateItem={(index, field, value) => dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field, value } })}
+            onRemoveItem={(index) => dispatch({ type: 'REMOVE_MILESLINES_ITEM', payload: index })}
+            onDescriptionChange={handleMileslinesDescriptionChange}
+            formatNumber={formatNumber}
+          />
+        )}
+
+        {showToshin && (
+          <ToshinSection
+            items={toshinItems}
+            exchangeRate={exchangeRate}
+            services={toshinServices}
+            onAddItem={() => dispatch({ type: 'ADD_TOSHIN_ITEM' })}
+            onUpdateItem={(index, field, value) => dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field, value } })}
+            onRemoveItem={(index) => dispatch({ type: 'REMOVE_TOSHIN_ITEM', payload: index })}
+            onDescriptionChange={handleToshinDescriptionChange}
+            onShowModal={() => dispatch({ type: 'SET_FIELD', payload: { field: 'showModal', value: true } })}
+            formatNumber={formatNumber}
+            showTopBorder={showMileslines}
+          />
+        )}
         
         <div className="mt-8 flex justify-end">
-            <div className="w-full md:w-1/2 lg:w-2/5 space-y-2 text-base">
-                {showMileslines && (
-                  <>
-                    <div className="flex justify-between items-center py-1">
-                        <span className="text-gray-600">紡織助劑</span>
-                        <CurrencyDisplay currency="$" amount={formatNumber(mileslinesSubtotal)} formatNumber={formatNumber} />
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                        <span className="text-gray-600">營業稅</span>
-                        <CurrencyDisplay currency="$" amount={formatNumber(tax)} formatNumber={formatNumber} />
-                    </div>
-                    <div className="flex justify-between items-center py-1 border-t font-semibold">
-                        <span className="text-gray-800">紡織助劑合計</span>
-                        <CurrencyDisplay currency="$" amount={formatNumber(mileslinesTotal)} formatNumber={formatNumber} />
-                    </div>
-                  </>
-                )}
-                 {showToshin && (
-                    <div className="flex justify-between items-center py-1 pt-4 font-semibold">
-                        <span className="text-gray-800">設備零組件</span>
-                         <CurrencyDisplay currency="$" amount={formatNumber(toshinTotalTWD)} formatNumber={formatNumber} />
-                    </div>
-                 )}
-                 <div className="flex justify-between items-center py-2 border-t-2 border-gray-400 mt-4">
-                    <span className="text-xl font-bold text-gray-900">本期帳款</span>
-                    <span className="text-xl font-bold text-gray-900">{`$ ${formatNumber(grandTotal)}`}</span>
-                 </div>
+          <div className="w-full md:w-1/2 lg:w-2/5">
+            {showMileslines && (
+              <>
+                <div className="flex justify-between py-1 border-b">
+                  <span className="text-gray-600">紡織助劑 小計</span>
+                  <CurrencyDisplay currency="$" amount={formatNumber(mileslinesSubtotal)} formatNumber={formatNumber} />
+                </div>
+                <div className="flex justify-between py-1 border-b">
+                  <span className="text-gray-600">營業稅 (5%)</span>
+                  <CurrencyDisplay currency="$" amount={formatNumber(tax)} formatNumber={formatNumber} />
+                </div>
+                <div className="flex justify-between py-1 font-semibold">
+                  <span className="text-gray-800">紡織助劑 合計</span>
+                  <CurrencyDisplay currency="$" amount={formatNumber(mileslinesTotal)} formatNumber={formatNumber} />
+                </div>
+              </>
+            )}
+            {showToshin && (
+              <div className={`flex justify-between py-1 font-semibold ${showMileslines ? 'mt-2' : ''}`}>
+                <span className="text-gray-800">設備零組件 合計</span>
+                <CurrencyDisplay currency="$" amount={formatNumber(toshinTotalTWD)} formatNumber={formatNumber} />
+              </div>
+            )}
+            <div className="flex justify-between py-2 border-t-2 border-gray-800 mt-2">
+              <span className="text-xl font-bold text-gray-900">總計</span>
+              <CurrencyDisplay currency="$" amount={formatNumber(grandTotal)} formatNumber={formatNumber} className="text-xl font-bold" />
             </div>
+          </div>
         </div>
 
         <div className="mt-6">
-            <h4 className="font-semibold text-gray-700 mb-2">備註：</h4>
-            <div className='space-y-1'>
-              {remarks.map((remark, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  className="no-print bg-gray-50 border-gray-300 text-gray-900 text-sm rounded-lg p-1 w-full border"
-                  value={remark}
-                  onChange={(e) => dispatch({ type: 'UPDATE_REMARK', payload: { index, value: e.target.value } })}
-                  placeholder={index === remarks.length - 1 ? '新增備註...' : `備註事項 ${index + 1}`}
-                />
-              ))}
-            </div>
-             <div className="hidden print-block text-sm text-gray-600">
-                {remarks.filter(r => r.trim() !== '').map((remark, index) => (
-                    <p key={index}>{`${index + 1}. ${remark}`}</p>
-                ))}
-            </div>
+          <h4 className="text-md font-semibold text-gray-700 mb-2">備註</h4>
+          <textarea 
+            className="no-print w-full p-2 border rounded-lg bg-gray-50"
+            rows={3} 
+            value={remarks.join('\n')}
+            onChange={(e) => dispatch({ type: 'SET_FIELD', payload: { field: 'remarks', value: e.target.value.split('\n') }})}
+            placeholder="請輸入品項說明或注意事項..."
+          />
+          <div className="hidden print-block whitespace-pre-wrap text-xs">
+            {remarks.join('\n')}
+          </div>
         </div>
       </div>
 
-      <ToshinItemsModal show={showModal} onClose={() => dispatch({ type: 'SET_FIELD', payload: { field: 'showModal', value: false }})} services={toshinServices} />
+      <ToshinItemsModal 
+        show={showModal} 
+        onClose={() => dispatch({ type: 'SET_FIELD', payload: { field: 'showModal', value: false } })} 
+        services={toshinServices} 
+      />
     </div>
   );
 };

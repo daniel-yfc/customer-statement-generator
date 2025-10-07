@@ -38,10 +38,10 @@ const StatementDownloader: React.FC<Props> = (props) => {
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                     {loading ? 'PDF 正在生成...' : '下載 PDF'}
                 </button>
-            // Add 'as any' to the closing brace of the function
-            ) as any}
+            )}
         </PDFDownloadLink>
     );
 };
 
 export default StatementDownloader;
+

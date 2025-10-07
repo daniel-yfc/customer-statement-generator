@@ -1,18 +1,15 @@
 # .github/workflows/deploy.yml
-        
-        
-# Name of the GitHub Action workflow.
+
+# Workflow name
 name: Deploy React App to GitHub Pages
 
-# Controls when the action will run.
-# This workflow runs on pushes to the "main" branch.
+# Controls when the action will run. Triggers on pushes to the "main" branch.
 on:
   push:
     branches: [ "main" ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel.
 jobs:
-  # This job is named "build-and-deploy".
   build-and-deploy:
     # The type of runner that the job will run on.
     runs-on: ubuntu-latest
@@ -23,26 +20,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Sets up Node.js in the runner environment.
+      # 2. Sets up Node.js and enables caching for npm dependencies to speed up future builds.
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # Use a specific version of Node.js
+          node-version: '18'
+          cache: 'npm' # This automatically handles caching of npm dependencies.
 
-      # 3. Installs dependencies. 'npm ci' is faster and more reliable for CI/CD than 'npm install'.
+      # 3. Installs dependencies using 'npm install' instead of 'npm ci'.
+      # This is more flexible and automatically resolves sync issues between package.json and package-lock.json.
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       # 4. Builds the application for production.
-      # The PUBLIC_URL environment variable is set to match the homepage URL.
       - name: Build application
         run: npm run build
         env:
-          PUBLIC_URL: /customer-statement-generator # Replace with your repository name                
+          # Ensure PUBLIC_URL matches your repository name for correct asset pathing on GitHub Pages.
+          PUBLIC_URL: /customer-statement-generator
 
-      # 5. Deploys the built application to the gh-pages branch.
+      # 5. Deploys the built application to the gh-pages branch using a dedicated action.
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4 # Updated to the latest version
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build # The directory the build command outputs to. Use './dist' if you are using Vite.        
+          publish_dir: ./build

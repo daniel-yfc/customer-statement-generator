@@ -23,14 +23,7 @@ export const usePersistentReducer = <S, A>(
   // 使用 useEffect 將狀態的任何變更同步到 localStorage
   useEffect(() => {
     try {
-      // 當 action 是 CLEAR_DATA 時，清除 localStorage
-      if ((state as any).clearAction) {
-          localStorage.removeItem(storageKey);
-          // 重新載入以確保狀態完全重置
-          window.location.reload();
-      } else {
-          localStorage.setItem(storageKey, JSON.stringify(state));
-      }
+      localStorage.setItem(storageKey, JSON.stringify(state));
     } catch (error) {
       console.error("Failed to save state to localStorage:", error);
     }
@@ -40,7 +33,8 @@ export const usePersistentReducer = <S, A>(
   const enhancedDispatch: Dispatch<A> = (action: A) => {
     if ((action as any).type === 'CLEAR_DATA') {
       localStorage.removeItem(storageKey);
-      window.location.reload();
+      // 直接 dispatch action 來重置 state，而不是重新載入頁面
+      dispatch(action);
     } else {
       dispatch(action);
     }

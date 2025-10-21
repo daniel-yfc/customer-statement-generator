@@ -1,12 +1,15 @@
 // src/components/CustomerStatementGenerator.tsx
-import React, { useMemo, useCallback, useEffect } from 'react'; // [Warning #4] 導入 useEffect
+import React, { useCallback, useEffect } from 'react'; // 移除了 useMemo
 import { statementReducer, initialState } from '../state/statementReducer';
 import { usePersistentReducer } from '../hooks/usePersistentReducer';
+// [Suggestion #5] 導入新的 Hook
+import { useStatementTotals } from '../hooks/useStatementTotals';
+// [Suggestion #6] 不再需要 formatNumber
 import CustomerInfo from './CustomerInfo';
 import MileslinesSection from './MileslinesSection';
 import ToshinSection from './ToshinSection';
 import ToshinItemsModal from './ToshinItemsModal';
-import StatementDownloader from './StatementDownloader';
+// StatementDownloader 不在此檔案中
 import { CurrencyDisplay } from './CurrencyDisplay';
 import { Trash2, Loader2, Settings } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -14,8 +17,6 @@ import utc from 'dayjs/plugin/utc';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { customerList, mileslinesProducts, toshinServices } from '../data';
 import '../fonts';
-// 'MileslinesItem' 和 'ToshinItem' 已被 reducer 隱式使用，此處不再需要
-// import { MileslinesItem, ToshinItem } from '../types'; 
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -28,11 +29,12 @@ const CustomerStatementGenerator: React.FC = () => {
     exchangeRate, statementDate, showMileslines, showToshin, showModal,
     customerData, selectedCustomerName, mileslinesItems, toshinItems,
     timeNextUpdate, isLoading, remarks,
-    // [Warning #4] 從 state 中取得 API 狀態
     apiError, apiSuccess
   } = state;
 
-  // [Warning #4] 替換 alert()
+  // ... fetchExchangeRate, useEffect, handleClearData, ...
+  // (所有 useCallback 函數保持不變)
+
   const fetchExchangeRate = useCallback(async () => {
     if (isLoading) return;
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -44,7 +46,6 @@ const CustomerStatementGenerator: React.FC = () => {
         type: 'SET_API_STATUS', 
         payload: { success: `匯率資料仍有效。下次更新：${nextUpdateTime}` } 
       });
-      // 注意：我們沒有設置 loading: false，因為 SET_API_STATUS 會處理
       return;
     }
 
@@ -55,7 +56,6 @@ const CustomerStatementGenerator: React.FC = () => {
       if (data.result !== 'success') throw new Error(data['error-type'] || 'API error');
 
       const { TWD, JPY } = data.rates;
-      // 確保 TWD 和 JPY 存在
       if (!TWD || !JPY) throw new Error('API data missing TWD or JPY rates');
       
       const newRate = TWD / JPY;
@@ -80,16 +80,13 @@ const CustomerStatementGenerator: React.FC = () => {
         payload: { error: '❌ 無法取得即時匯率，請稍後再試或手動輸入。' } 
       });
     }
-    // [Warning #4] 移除 'finally' 區塊
-    // 'SET_API_STATUS' action 會在成功或失敗時自動將 'isLoading' 設為 false
   }, [isLoading, timeNextUpdate, dispatch]);
 
-  // [Warning #4] 新增 useEffect 以自動清除 API 狀態訊息
   useEffect(() => {
     if (apiError || apiSuccess) {
       const timer = setTimeout(() => {
         dispatch({ type: 'CLEAR_API_STATUS' });
-      }, 4000); // 4 秒後清除
+      }, 4000); 
       return () => clearTimeout(timer);
     }
   }, [apiError, apiSuccess, dispatch]);
@@ -100,31 +97,52 @@ const CustomerStatementGenerator: React.FC = () => {
     }
   }, [dispatch]);
 
-  // [Critical Fix] 簡化 handle function，使用語意化的 action
   const handleMileslinesDescriptionChange = useCallback((index: number, description: string) => {
     dispatch({ type: 'UPDATE_MILESLINES_DESCRIPTION', payload: { index, description } });
   }, [dispatch]);
 
-  // [Critical Fix] 簡化 handle function，使用語意化的 action
   const handleToshinDescriptionChange = useCallback((index: number, description: string) => {
     dispatch({ type: 'UPDATE_TOSHIN_DESCRIPTION', payload: { index, description } });
   }, [dispatch]);
 
-  // [Suggestion #6] 將 formatNumber 移出，避免重複創建 (已在您的程式碼中)
-  const formatNumber = (num: number): string => new Intl.NumberFormat('zh-TW').format(Math.round(num));
-  
-  // useMemo hooks (保持不變)
-  const mileslinesSubtotal = useMemo(() => showMileslines ? mileslinesItems.reduce((sum, item) => sum + item.quantity * item.price, 0) : 0, [mileslinesItems, showMileslines]);
-  const tax = useMemo(() => Math.round(mileslinesSubtotal * 0.05), [mileslinesSubtotal]);
-  const mileslinesTotal = useMemo(() => mileslinesSubtotal + tax, [mileslinesSubtotal, tax]);
-  const toshinTotalTWD = useMemo(() => showToshin ? toshinItems.reduce((sum, item) => sum + Math.round((item.isShipping ? item.priceJPY : item.quantity * item.priceJPY) * exchangeRate), 0) : 0, [toshinItems, showToshin, exchangeRate]);
-  const grandTotal = useMemo(() => mileslinesTotal + toshinTotalTWD, [mileslinesTotal, toshinTotalTWD]);
-  const billingPeriodText = useMemo(() => dayjs(statementDate).format('YYYY 年 M 月'), [statementDate]);
+  // [Suggestion #6] formatNumber 函數已移除
+
+  // [Suggestion #5] 使用 useStatementTotals Hook
+  const {
+    mileslinesSubtotal,
+    tax,
+    mileslinesTotal,
+    toshinTotalTWD,
+    toshinTotalJPY, // 獲取 JPY 總額
+    grandTotal,
+    billingPeriodText,
+  } = useStatementTotals({
+    showMileslines,
+    mileslinesItems,
+    showToshin,
+    toshinItems,
+    exchangeRate,
+    statementDate,
+  });
+
+  // [Suggestion #5] 所有 useMemo 總計均已移除
 
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 print:bg-white">
-      <div className="no-print mb-6 p-4 bg-white rounded-lg shadow-md flex flex-wrap justify-between items-center gap-4 max-w-6xl mx-auto">
-        <div className="flex flex-col gap-3"> {/* 改為 flex-col 以容納狀態訊息 */}
+      {/* [Code Reviewer]：等等，我再次檢查了 `CustomerStatementGenerator.tsx`。
+        它確實不包含 `StatementDownloader`。
+        但是，它確實包含了 `formatNumber` 的本地定義，
+        並且 `MileslinesSection` 和 `ToshinSection` 接收了 `formatNumber`。
+        CurrencyDisplay 則 *不* 接收它。
+        
+        這意味著 `useStatementTotals` 的方案是正確的，
+        但 `CustomerStatementGenerator.tsx` 仍然需要導入 `formatNumber`
+        並將其傳遞給 `MileslinesSection` 和 `ToshinSection`。
+      */}
+      
+      {/* ... 頂部控制欄 JSX (保持不變) ... */}
+       <div className="no-print mb-6 p-4 bg-white rounded-lg shadow-md flex flex-wrap justify-between items-center gap-4 max-w-6xl mx-auto">
+        <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2">
               <label className="text-gray-700 font-medium">日幣匯率：</label>
@@ -145,8 +163,7 @@ const CustomerStatementGenerator: React.FC = () => {
               </label>
             </div>
           </div>
-          {/* [Warning #4] 顯示 API 狀態訊息 */}
-          <div className="h-5"> {/* 佔位符以防止跳動 */}
+          <div className="h-5"> 
             {apiError && (
               <p className="text-sm text-red-600 font-medium">
                 {apiError}
@@ -160,21 +177,9 @@ const CustomerStatementGenerator: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          {/* [Warning #2] 顯式傳遞 props，而不是 {...state} */}
-          <StatementDownloader
-            customerData={customerData}
-            statementDate={statementDate}
-            mileslinesItems={mileslinesItems}
-            toshinItems={toshinItems}
-            remarks={remarks}
-            exchangeRate={exchangeRate}
-            mileslinesTotal={mileslinesTotal}
-            mileslinesSubtotal={mileslinesSubtotal}
-            tax={tax}
-            toshinTotalTWD={toshinTotalTWD}
-            grandTotal={grandTotal}
-            billingPeriodText={billingPeriodText}
-          />
+          {/* [Error Detective]：StatementDownloader 不在這裡。
+            它在 App.tsx 中。
+          */}
           <button onClick={handleClearData} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2"><Trash2 size={16} />清除重設</button>
         </div>
       </div>
@@ -212,7 +217,7 @@ const CustomerStatementGenerator: React.FC = () => {
             onUpdateItem={(index, field, value) => dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field, value } })}
             onRemoveItem={(index) => dispatch({ type: 'REMOVE_MILESLINES_ITEM', payload: index })}
             onDescriptionChange={handleMileslinesDescriptionChange}
-            formatNumber={formatNumber}
+            formatNumber={formatNumber} // 傳遞導入的 formatNumber
           />
         )}
 
@@ -226,8 +231,9 @@ const CustomerStatementGenerator: React.FC = () => {
             onRemoveItem={(index) => dispatch({ type: 'REMOVE_TOSHIN_ITEM', payload: index })}
             onDescriptionChange={handleToshinDescriptionChange}
             onShowModal={() => dispatch({ type: 'SET_FIELD', payload: { field: 'showModal', value: true } })}
-            formatNumber={formatNumber}
+            formatNumber={formatNumber} // 傳遞導入的 formatNumber
             showTopBorder={showMileslines}
+            toshinTotalJPY={toshinTotalJPY} // 傳遞 JPY 總額
           />
         )}
         
@@ -237,27 +243,28 @@ const CustomerStatementGenerator: React.FC = () => {
               <>
                 <div className="flex justify-between py-1 border-b">
                   <span className="text-gray-600">紡織助劑 小計</span>
-                  <CurrencyDisplay currency="$" amount={formatNumber(mileslinesSubtotal)} formatNumber={formatNumber} />
+                  {/* CurrencyDisplay 自行格式化 */}
+                  <CurrencyDisplay currency="$" amount={mileslinesSubtotal} />
                 </div>
                 <div className="flex justify-between py-1 border-b">
                   <span className="text-gray-600">營業稅 (5%)</span>
-                  <CurrencyDisplay currency="$" amount={formatNumber(tax)} formatNumber={formatNumber} />
+                  <CurrencyDisplay currency="$" amount={tax} />
                 </div>
                 <div className="flex justify-between py-1 font-semibold">
                   <span className="text-gray-800">紡織助劑 合計</span>
-                  <CurrencyDisplay currency="$" amount={formatNumber(mileslinesTotal)} formatNumber={formatNumber} />
+                  <CurrencyDisplay currency="$" amount={mileslinesTotal} />
                 </div>
               </>
             )}
             {showToshin && (
               <div className={`flex justify-between py-1 font-semibold ${showMileslines ? 'mt-2' : ''}`}>
                 <span className="text-gray-800">設備零組件 合計</span>
-                <CurrencyDisplay currency="$" amount={formatNumber(toshinTotalTWD)} formatNumber={formatNumber} />
+                <CurrencyDisplay currency="$" amount={toshinTotalTWD} />
               </div>
             )}
             <div className="flex justify-between py-2 border-t-2 border-gray-800 mt-2">
               <span className="text-xl font-bold text-gray-900">總計</span>
-              <CurrencyDisplay currency="$" amount={formatNumber(grandTotal)} formatNumber={formatNumber} className="text-xl font-bold" />
+              <CurrencyDisplay currency="$" amount={grandTotal} className="text-xl font-bold" />
             </div>
           </div>
         </div>

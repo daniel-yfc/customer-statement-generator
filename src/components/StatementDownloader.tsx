@@ -12,6 +12,8 @@ interface Props extends StatementState {
     toshinTotalTWD: number;
     grandTotal: number;
     billingPeriodText: string;
+    // [FIX] Typescript pro 建議：新增 formatNumber 的類型定義
+    formatNumber: (num: number) => string;
 }
 
 const StatementDownloader: React.FC<Props> = (props) => {
@@ -26,7 +28,6 @@ const StatementDownloader: React.FC<Props> = (props) => {
 
     return (
         <PDFDownloadLink document={document} fileName={fileName}>
-            {/* 修正：移除參數的顯式類型 BlobProviderParams，讓 TypeScript 自動推斷 */}
             {({ loading }) => (
                 <button
                     className="no-print bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -41,4 +42,3 @@ const StatementDownloader: React.FC<Props> = (props) => {
 };
 
 export default StatementDownloader;
-

@@ -42,15 +42,9 @@ function App() {
   // const grandTotal = useMemo(...); // <-- 移除
   // const billingPeriodText = useMemo(...); // <-- 移除
 
-  return (
+ return (
     <div className="App">
       <CustomerStatementGenerator />
-
-      {/* [Code Reviewer]：這是一個奇怪的架構。
-        StatementDownloader 應該在 CustomerStatementGenerator 內部，
-        而不是在 App.tsx 中並排。
-        但我們將修復當前的程式碼。
-      */}
 
       <div style={{ display: 'none' }}>
         <StatementDownloader
@@ -65,10 +59,10 @@ function App() {
           mileslinesSubtotal={mileslinesSubtotal}
           tax={tax}
           toshinTotalTWD={toshinTotalTWD}
-          toshinTotalJPY={toshinTotalJPY}
+          // [FIX] 移除此行：toshinTotalJPY={toshinTotalJPY}
           grandTotal={grandTotal}
           billingPeriodText={billingPeriodText}
-          // [Suggestion #6] 傳遞導入的 formatNumber
+          // [Suggestion #6] 傳遞導入的 formatNumber (這行是正確的)
           formatNumber={formatNumber}
         />
       </div>

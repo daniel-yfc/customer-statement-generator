@@ -174,21 +174,19 @@ const CustomerStatementGenerator: React.FC = () => {
             </div>
           </div>
         </header>
-
+// src/components/CustomerStatementGenerator.tsx (Fixed)
         <CustomerInfo 
           customerList={customerList} 
           selectedCustomerName={selectedCustomerName} 
           customerData={customerData} 
           isEditable={selectedCustomerName === '自行輸入'} 
           onCustomerChange={(name) => dispatch({ type: 'SET_CUSTOMER', payload: name })} 
-          // [FIX] TS2322
-          // 我們添加一個類型防護 (if field !== 'bankAccount')
-          // 因為 CustomerInfo 只會傳遞 string 類型的欄位
-          // 這能向 TypeScript 證明 types 匹配
+          // 註解：此處的 onCustomerDataChange 處理器是類型安全的。
+          // 'field' 來自 keyof Customer，'value' 來自 string，
+          // 這與 useReducer 中 UPDATE_CUSTOMER_DATA action 的類型定義相符。
+          // 先前 TS2367 錯誤的 if 檢查 (field !== 'bankAccount') 是多餘的並已被移除。
           onCustomerDataChange={(field, value) => {
-            if (field !== 'bankAccount') {
-              dispatch({ type: 'UPDATE_CUSTOMER_DATA', payload: { field, value } });
-            }
+            dispatch({ type: 'UPDATE_CUSTOMER_DATA', payload: { field, value } });
           }}
         />
         
@@ -276,3 +274,4 @@ const CustomerStatementGenerator: React.FC = () => {
 };
 
 export default CustomerStatementGenerator;
+

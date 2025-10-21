@@ -174,17 +174,11 @@ const CustomerStatementGenerator: React.FC = () => {
             </div>
           </div>
         </header>
-// src/components/CustomerStatementGenerator.tsx (Fixed)
-        <CustomerInfo 
-          customerList={customerList} 
-          selectedCustomerName={selectedCustomerName} 
-          customerData={customerData} 
-          isEditable={selectedCustomerName === '自行輸入'} 
-          onCustomerChange={(name) => dispatch({ type: 'SET_CUSTOMER', payload: name })} 
-          // 註解：此處的 onCustomerDataChange 處理器是類型安全的。
-          // 'field' 來自 keyof Customer，'value' 來自 string，
-          // 這與 useReducer 中 UPDATE_CUSTOMER_DATA action 的類型定義相符。
-          // 先前 TS2367 錯誤的 if 檢查 (field !== 'bankAccount') 是多餘的並已被移除。
+          // src/components/CustomerStatementGenerator.tsx (Fixed)
+          // 註解：onCustomerDataChange 的 'field' 參數已由 CustomerInfo.tsx 
+          // 確保為 'keyof Customer' 類型，
+          // 這與 'UPDATE_CUSTOMER_DATA' action 的 payload 類型相符。
+          // 移除先前導致 TS2367 錯誤的多餘 if 判斷。
           onCustomerDataChange={(field, value) => {
             dispatch({ type: 'UPDATE_CUSTOMER_DATA', payload: { field, value } });
           }}
@@ -274,4 +268,5 @@ const CustomerStatementGenerator: React.FC = () => {
 };
 
 export default CustomerStatementGenerator;
+
 

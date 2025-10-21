@@ -1,5 +1,6 @@
 import { Customer, MileslinesItem, ToshinItem } from '../types';
-import { customerList } from '../data';
+// 1. 從 data.ts 額外匯入 mileslinesProducts
+import { customerList, mileslinesProducts } from '../data';
 import dayjs from 'dayjs';
 
 // 1. 定義 State 的形狀
@@ -31,9 +32,13 @@ type Action =
   | { type: 'REMOVE_TOSHIN_ITEM'; payload: number }
   | { type: 'UPDATE_EXCHANGE_RATE'; payload: { rate: number; nextUpdate: number } }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'CLEAR_DATA' };
+  | { type: 'CLEAR_DATA' }
+  // 2. 新增缺失的 Action Types
+  | { type: 'UPDATE_MILESLINES_DESCRIPTION'; payload: { index: number; description: string } }
+  | { type: 'UPDATE_TOSHIN_DESCRIPTION'; payload: { index: number; description: string } };
 
-// 3. 初始狀態
+
+// 3. 初始狀態 (保持不變)
 export const initialState: StatementState = {
   exchangeRate: 0.208,
   statementDate: new Date().toISOString().split('T')[0],
@@ -120,6 +125,23 @@ export const statementReducer = (state: StatementState, action: Action): Stateme
         toshinItems: state.toshinItems.filter((_, index) => index !== action.payload),
       };
 
+    // 3. 新增缺失的業務邏輯
+    case 'UPDATE_MILESLINES_DESCRIPTION': {
+      const { index, description } = action.payload;
+      const product = mileslinesProducts.find(p => p.description === description);
+      const isCustom = description === '自行輸入';
+      const price = (product && !isCustom) ? product.price : state.mileslinesItems[index].price;
+      return { ...state, mileslinesItems: state.mileslinesItems.map((item, i) => i === index ? { ...item, description, isCustom, price } : item) };
+    }
+    
+    case 'UPDATE_TOSHIN_DESCRIPTION': {
+      const { index, description } = action.payload;
+      const isShipping = description.startsWith('運費 >');
+      const isCustom = description === '自行輸入';
+      const shippingCarrier = isShipping ? description.split(' > ')[1] : '';
+      return { ...state, toshinItems: state.toshinItems.map((item, i) => i === index ? { ...item, description, isShipping, isCustom, shippingCarrier } : item) };
+    }
+
     case 'UPDATE_EXCHANGE_RATE':
       return {
         ...state,
@@ -138,4 +160,3 @@ export const statementReducer = (state: StatementState, action: Action): Stateme
       return state;
   }
 };
-

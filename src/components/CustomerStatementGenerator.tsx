@@ -1,5 +1,5 @@
 // src/components/CustomerStatementGenerator.tsx
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react'; // [Warning #4] 導入 useEffect
 import { statementReducer, initialState } from '../state/statementReducer';
 import { usePersistentReducer } from '../hooks/usePersistentReducer';
 import CustomerInfo from './CustomerInfo';
@@ -14,7 +14,8 @@ import utc from 'dayjs/plugin/utc';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { customerList, mileslinesProducts, toshinServices } from '../data';
 import '../fonts';
-import { MileslinesItem, ToshinItem } from '../types';
+// 'MileslinesItem' 和 'ToshinItem' 已被 reducer 隱式使用，此處不再需要
+// import { MileslinesItem, ToshinItem } from '../types'; 
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -26,17 +27,24 @@ const CustomerStatementGenerator: React.FC = () => {
   const {
     exchangeRate, statementDate, showMileslines, showToshin, showModal,
     customerData, selectedCustomerName, mileslinesItems, toshinItems,
-    timeNextUpdate, isLoading, remarks
+    timeNextUpdate, isLoading, remarks,
+    // [Warning #4] 從 state 中取得 API 狀態
+    apiError, apiSuccess
   } = state;
 
+  // [Warning #4] 替換 alert()
   const fetchExchangeRate = useCallback(async () => {
     if (isLoading) return;
     dispatch({ type: 'SET_LOADING', payload: true });
 
     const now = dayjs().unix();
     if (now < timeNextUpdate) {
-      alert(`匯率資料仍有效，無需更新。下次更新時間：${dayjs.unix(timeNextUpdate).local().format('YYYY-MM-DD HH:mm')}`);
-      dispatch({ type: 'SET_LOADING', payload: false });
+      const nextUpdateTime = dayjs.unix(timeNextUpdate).local().format('YYYY-MM-DD HH:mm');
+      dispatch({ 
+        type: 'SET_API_STATUS', 
+        payload: { success: `匯率資料仍有效。下次更新：${nextUpdateTime}` } 
+      });
+      // 注意：我們沒有設置 loading: false，因為 SET_API_STATUS 會處理
       return;
     }
 
@@ -47,7 +55,10 @@ const CustomerStatementGenerator: React.FC = () => {
       if (data.result !== 'success') throw new Error(data['error-type'] || 'API error');
 
       const { TWD, JPY } = data.rates;
-      const newRate = (TWD && JPY) ? TWD / JPY : 0;
+      // 確保 TWD 和 JPY 存在
+      if (!TWD || !JPY) throw new Error('API data missing TWD or JPY rates');
+      
+      const newRate = TWD / JPY;
 
       if (newRate > 0) {
         const rate = parseFloat(newRate.toFixed(4));
@@ -55,17 +66,33 @@ const CustomerStatementGenerator: React.FC = () => {
         dispatch({ type: 'UPDATE_EXCHANGE_RATE', payload: { rate, nextUpdate } });
         
         const localTime = dayjs.utc(data.time_last_update_utc).local().format('YYYY-MM-DD HH:mm');
-        alert(`✅ 匯率更新成功！\n新匯率: ${rate}\n數據時間: ${localTime}`);
+        dispatch({ 
+          type: 'SET_API_STATUS', 
+          payload: { success: `✅ 匯率更新成功！(${localTime})` } 
+        });
       } else {
         throw new Error('Invalid rate received');
       }
     } catch (error) {
       console.error(`Fetch from ${EXCHANGE_RATE_API_URL} failed:`, error);
-      alert('❌ 無法取得即時匯率，請檢查網路連線或手動輸入。');
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ 
+        type: 'SET_API_STATUS', 
+        payload: { error: '❌ 無法取得即時匯率，請稍後再試或手動輸入。' } 
+      });
     }
+    // [Warning #4] 移除 'finally' 區塊
+    // 'SET_API_STATUS' action 會在成功或失敗時自動將 'isLoading' 設為 false
   }, [isLoading, timeNextUpdate, dispatch]);
+
+  // [Warning #4] 新增 useEffect 以自動清除 API 狀態訊息
+  useEffect(() => {
+    if (apiError || apiSuccess) {
+      const timer = setTimeout(() => {
+        dispatch({ type: 'CLEAR_API_STATUS' });
+      }, 4000); // 4 秒後清除
+      return () => clearTimeout(timer);
+    }
+  }, [apiError, apiSuccess, dispatch]);
 
   const handleClearData = useCallback(() => {
     if (window.confirm('確定要清除所有已輸入的資料嗎？這個操作無法復原。')) {
@@ -73,15 +100,20 @@ const CustomerStatementGenerator: React.FC = () => {
     }
   }, [dispatch]);
 
+  // [Critical Fix] 簡化 handle function，使用語意化的 action
   const handleMileslinesDescriptionChange = useCallback((index: number, description: string) => {
     dispatch({ type: 'UPDATE_MILESLINES_DESCRIPTION', payload: { index, description } });
   }, [dispatch]);
 
+  // [Critical Fix] 簡化 handle function，使用語意化的 action
   const handleToshinDescriptionChange = useCallback((index: number, description: string) => {
     dispatch({ type: 'UPDATE_TOSHIN_DESCRIPTION', payload: { index, description } });
   }, [dispatch]);
 
+  // [Suggestion #6] 將 formatNumber 移出，避免重複創建 (已在您的程式碼中)
   const formatNumber = (num: number): string => new Intl.NumberFormat('zh-TW').format(Math.round(num));
+  
+  // useMemo hooks (保持不變)
   const mileslinesSubtotal = useMemo(() => showMileslines ? mileslinesItems.reduce((sum, item) => sum + item.quantity * item.price, 0) : 0, [mileslinesItems, showMileslines]);
   const tax = useMemo(() => Math.round(mileslinesSubtotal * 0.05), [mileslinesSubtotal]);
   const mileslinesTotal = useMemo(() => mileslinesSubtotal + tax, [mileslinesSubtotal, tax]);
@@ -92,28 +124,57 @@ const CustomerStatementGenerator: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 print:bg-white">
       <div className="no-print mb-6 p-4 bg-white rounded-lg shadow-md flex flex-wrap justify-between items-center gap-4 max-w-6xl mx-auto">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <label className="text-gray-700 font-medium">日幣匯率：</label>
-            <input className="w-24 bg-gray-50 p-2 border rounded-lg" type="number" step="0.0001" value={exchangeRate} onChange={(e) => dispatch({ type: 'SET_FIELD', payload: { field: 'exchangeRate', value: parseFloat(e.target.value) || 0 }})} />
-            <button onClick={fetchExchangeRate} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-lg flex items-center gap-2 disabled:opacity-50" disabled={isLoading}>
-              {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Settings size={14} />}
-              {isLoading ? '取得中...' : '更新匯率'}
-            </button>
+        <div className="flex flex-col gap-3"> {/* 改為 flex-col 以容納狀態訊息 */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <label className="text-gray-700 font-medium">日幣匯率：</label>
+              <input className="w-24 bg-gray-50 p-2 border rounded-lg" type="number" step="0.0001" value={exchangeRate} onChange={(e) => dispatch({ type: 'SET_FIELD', payload: { field: 'exchangeRate', value: parseFloat(e.target.value) || 0 }})} />
+              <button onClick={fetchExchangeRate} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-lg flex items-center gap-2 disabled:opacity-50" disabled={isLoading}>
+                {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Settings size={14} />}
+                {isLoading ? '取得中...' : '更新匯率'}
+              </button>
+            </div>
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" className="h-5 w-5 rounded" checked={showMileslines} onChange={(e) => dispatch({ type: 'SET_FIELD', payload: { field: 'showMileslines', value: e.target.checked }})} />
+                <span>紡織助劑</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" className="h-5 w-5 rounded" checked={showToshin} onChange={(e) => dispatch({ type: 'SET_FIELD', payload: { field: 'showToshin', value: e.target.checked }})} />
+                <span>設備零組件</span>
+              </label>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" className="h-5 w-5 rounded" checked={showMileslines} onChange={(e) => dispatch({ type: 'SET_FIELD', payload: { field: 'showMileslines', value: e.target.checked }})} />
-              <span>紡織助劑</span>
-            </label>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" className="h-5 w-5 rounded" checked={showToshin} onChange={(e) => dispatch({ type: 'SET_FIELD', payload: { field: 'showToshin', value: e.target.checked }})} />
-              <span>設備零組件</span>
-            </label>
+          {/* [Warning #4] 顯示 API 狀態訊息 */}
+          <div className="h-5"> {/* 佔位符以防止跳動 */}
+            {apiError && (
+              <p className="text-sm text-red-600 font-medium">
+                {apiError}
+              </p>
+            )}
+            {apiSuccess && (
+              <p className="text-sm text-green-600 font-medium">
+                {apiSuccess}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <StatementDownloader {...state} {...{ mileslinesTotal, mileslinesSubtotal, tax, toshinTotalTWD, grandTotal, billingPeriodText, remarks }} />
+          {/* [Warning #2] 顯式傳遞 props，而不是 {...state} */}
+          <StatementDownloader
+            customerData={customerData}
+            statementDate={statementDate}
+            mileslinesItems={mileslinesItems}
+            toshinItems={toshinItems}
+            remarks={remarks}
+            exchangeRate={exchangeRate}
+            mileslinesTotal={mileslinesTotal}
+            mileslinesSubtotal={mileslinesSubtotal}
+            tax={tax}
+            toshinTotalTWD={toshinTotalTWD}
+            grandTotal={grandTotal}
+            billingPeriodText={billingPeriodText}
+          />
           <button onClick={handleClearData} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2"><Trash2 size={16} />清除重設</button>
         </div>
       </div>
@@ -226,5 +287,3 @@ const CustomerStatementGenerator: React.FC = () => {
 };
 
 export default CustomerStatementGenerator;
-
-

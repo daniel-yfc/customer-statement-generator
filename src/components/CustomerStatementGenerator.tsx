@@ -1,15 +1,13 @@
 // src/components/CustomerStatementGenerator.tsx
-import React, { useCallback, useEffect } from 'react'; // 移除了 useMemo
+import React, { useCallback, useEffect } from 'react';
 import { statementReducer, initialState } from '../state/statementReducer';
 import { usePersistentReducer } from '../hooks/usePersistentReducer';
-// [Suggestion #5] 導入新的 Hook
 import { useStatementTotals } from '../hooks/useStatementTotals';
-// [Suggestion #6] 不再需要 formatNumber
+import { formatNumber } from '../utils/format'; 
 import CustomerInfo from './CustomerInfo';
 import MileslinesSection from './MileslinesSection';
 import ToshinSection from './ToshinSection';
 import ToshinItemsModal from './ToshinItemsModal';
-// StatementDownloader 不在此檔案中
 import { CurrencyDisplay } from './CurrencyDisplay';
 import { Trash2, Loader2, Settings } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -31,9 +29,6 @@ const CustomerStatementGenerator: React.FC = () => {
     timeNextUpdate, isLoading, remarks,
     apiError, apiSuccess
   } = state;
-
-  // ... fetchExchangeRate, useEffect, handleClearData, ...
-  // (所有 useCallback 函數保持不變)
 
   const fetchExchangeRate = useCallback(async () => {
     if (isLoading) return;
@@ -105,15 +100,12 @@ const CustomerStatementGenerator: React.FC = () => {
     dispatch({ type: 'UPDATE_TOSHIN_DESCRIPTION', payload: { index, description } });
   }, [dispatch]);
 
-  // [Suggestion #6] formatNumber 函數已移除
-
-  // [Suggestion #5] 使用 useStatementTotals Hook
   const {
     mileslinesSubtotal,
     tax,
     mileslinesTotal,
     toshinTotalTWD,
-    toshinTotalJPY, // 獲取 JPY 總額
+    toshinTotalJPY, 
     grandTotal,
     billingPeriodText,
   } = useStatementTotals({
@@ -125,22 +117,8 @@ const CustomerStatementGenerator: React.FC = () => {
     statementDate,
   });
 
-  // [Suggestion #5] 所有 useMemo 總計均已移除
-
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 print:bg-white">
-      {/* [Code Reviewer]：等等，我再次檢查了 `CustomerStatementGenerator.tsx`。
-        它確實不包含 `StatementDownloader`。
-        但是，它確實包含了 `formatNumber` 的本地定義，
-        並且 `MileslinesSection` 和 `ToshinSection` 接收了 `formatNumber`。
-        CurrencyDisplay 則 *不* 接收它。
-        
-        這意味著 `useStatementTotals` 的方案是正確的，
-        但 `CustomerStatementGenerator.tsx` 仍然需要導入 `formatNumber`
-        並將其傳遞給 `MileslinesSection` 和 `ToshinSection`。
-      */}
-      
-      {/* ... 頂部控制欄 JSX (保持不變) ... */}
        <div className="no-print mb-6 p-4 bg-white rounded-lg shadow-md flex flex-wrap justify-between items-center gap-4 max-w-6xl mx-auto">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-4">
@@ -177,9 +155,6 @@ const CustomerStatementGenerator: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          {/* [Error Detective]：StatementDownloader 不在這裡。
-            它在 App.tsx 中。
-          */}
           <button onClick={handleClearData} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2"><Trash2 size={16} />清除重設</button>
         </div>
       </div>
@@ -206,7 +181,15 @@ const CustomerStatementGenerator: React.FC = () => {
           customerData={customerData} 
           isEditable={selectedCustomerName === '自行輸入'} 
           onCustomerChange={(name) => dispatch({ type: 'SET_CUSTOMER', payload: name })} 
-          onCustomerDataChange={(field, value) => dispatch({ type: 'UPDATE_CUSTOMER_DATA', payload: { field, value }})}
+          // [FIX] TS2322
+          // 我們添加一個類型防護 (if field !== 'bankAccount')
+          // 因為 CustomerInfo 只會傳遞 string 類型的欄位
+          // 這能向 TypeScript 證明 types 匹配
+          onCustomerDataChange={(field, value) => {
+            if (field !== 'bankAccount') {
+              dispatch({ type: 'UPDATE_CUSTOMER_DATA', payload: { field, value } });
+            }
+          }}
         />
         
         {showMileslines && (
@@ -217,7 +200,7 @@ const CustomerStatementGenerator: React.FC = () => {
             onUpdateItem={(index, field, value) => dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field, value } })}
             onRemoveItem={(index) => dispatch({ type: 'REMOVE_MILESLINES_ITEM', payload: index })}
             onDescriptionChange={handleMileslinesDescriptionChange}
-            formatNumber={formatNumber} // 傳遞導入的 formatNumber
+            formatNumber={formatNumber}
           />
         )}
 
@@ -231,9 +214,9 @@ const CustomerStatementGenerator: React.FC = () => {
             onRemoveItem={(index) => dispatch({ type: 'REMOVE_TOSHIN_ITEM', payload: index })}
             onDescriptionChange={handleToshinDescriptionChange}
             onShowModal={() => dispatch({ type: 'SET_FIELD', payload: { field: 'showModal', value: true } })}
-            formatNumber={formatNumber} // 傳遞導入的 formatNumber
+            formatNumber={formatNumber}
             showTopBorder={showMileslines}
-            toshinTotalJPY={toshinTotalJPY} // 傳遞 JPY 總額
+            toshinTotalJPY={toshinTotalJPY}
           />
         )}
         
@@ -243,7 +226,6 @@ const CustomerStatementGenerator: React.FC = () => {
               <>
                 <div className="flex justify-between py-1 border-b">
                   <span className="text-gray-600">紡織助劑 小計</span>
-                  {/* CurrencyDisplay 自行格式化 */}
                   <CurrencyDisplay currency="$" amount={mileslinesSubtotal} />
                 </div>
                 <div className="flex justify-between py-1 border-b">

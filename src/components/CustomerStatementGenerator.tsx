@@ -179,7 +179,7 @@ const CustomerStatementGenerator: React.FC = () => {
           // 確保為 'keyof Customer' 類型，
           // 這與 'UPDATE_CUSTOMER_DATA' action 的 payload 類型相符。
           // 移除先前導致 TS2367 錯誤的多餘 if 判斷。
-          onCustomerDataChange={(field, value) => {
+onCustomerDataChange={(field, value) => {
             dispatch({ type: 'UPDATE_CUSTOMER_DATA', payload: { field, value } });
           }}
         />
@@ -268,5 +268,6 @@ const CustomerStatementGenerator: React.FC = () => {
 };
 
 export default CustomerStatementGenerator;
+
 
 

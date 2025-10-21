@@ -1,7 +1,6 @@
+// src/state/statementReducer.ts
 import { Customer, MileslinesItem, ToshinItem } from '../types';
-// 1. 從 data.ts 額外匯入 mileslinesProducts
 import { customerList, mileslinesProducts } from '../data';
-// import dayjs from 'dayjs';
 
 // 1. 定義 State 的形狀
 export interface StatementState {
@@ -54,6 +53,7 @@ type UpdateToshinItemAction = {
   };
 }[keyof ToshinItem];
 
+
 // 2. 定義 Actions 的類型 (現在完全類型安全)
 export type StatementAction =
   | SetFieldAction
@@ -68,15 +68,17 @@ export type StatementAction =
   | { type: 'UPDATE_EXCHANGE_RATE'; payload: { rate: number; nextUpdate: number } }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'CLEAR_DATA' }
+  // 來自 "Critical" 修復的 Actions
   | { type: 'UPDATE_MILESLINES_DESCRIPTION'; payload: { index: number; description: string } }
   | { type: 'UPDATE_TOSHIN_DESCRIPTION'; payload: { index: number; description: string } }
   // [Warning #4] 新增 API 狀態 Actions
   | { type: 'SET_API_STATUS'; payload: { error?: string | null; success?: string | null } }
   | { type: 'CLEAR_API_STATUS' };
 
+
 // 3. 初始狀態
 export const initialState: StatementState = {
-  exchangeRate: 0.208,
+  exchangeRate: 0.208, // 將由 API 更新
   statementDate: new Date().toISOString().split('T')[0],
   showMileslines: true,
   showToshin: true,
@@ -97,8 +99,7 @@ export const initialState: StatementState = {
 export const statementReducer = (state: StatementState, action: StatementAction): StatementState => {
   switch (action.type) {
     case 'SET_FIELD':
-      // [Warning #3] 現在 'action.payload.value' 的類型
-      // 會根據 'action.payload.field' 自動推斷，完全類型安全
+      // [Warning #3] 完全類型安全
       return { ...state, [action.payload.field]: action.payload.value };
 
     case 'SET_CUSTOMER': {
@@ -112,7 +113,6 @@ export const statementReducer = (state: StatementState, action: StatementAction)
     }
 
     case 'UPDATE_CUSTOMER_DATA':
-      // [Warning #3] 類型安全
       return {
         ...state,
         customerData: {
@@ -131,7 +131,6 @@ export const statementReducer = (state: StatementState, action: StatementAction)
       };
 
     case 'UPDATE_MILESLINES_ITEM':
-      // [Warning #3] 類型安全
       return {
         ...state,
         mileslinesItems: state.mileslinesItems.map((item, index) =>
@@ -155,7 +154,6 @@ export const statementReducer = (state: StatementState, action: StatementAction)
       };
 
     case 'UPDATE_TOSHIN_ITEM':
-      // [Warning #3] 類型安全
       return {
         ...state,
         toshinItems: state.toshinItems.map((item, index) =>
@@ -169,6 +167,7 @@ export const statementReducer = (state: StatementState, action: StatementAction)
         toshinItems: state.toshinItems.filter((_, index) => index !== action.payload),
       };
 
+    // "Critical" 修復的邏輯
     case 'UPDATE_MILESLINES_DESCRIPTION': {
       const { index, description } = action.payload;
       const product = mileslinesProducts.find(p => p.description === description);
@@ -202,13 +201,13 @@ export const statementReducer = (state: StatementState, action: StatementAction)
       };
 
     case 'CLEAR_DATA':
-      return { ...initialState };
+      return { ...initialState, statementDate: initialState.statementDate }; // 保留日期
 
     // [Warning #4] 新增 Reducer Cases
     case 'SET_API_STATUS':
       return {
         ...state,
-        isLoading: false, // 設置狀態時，停止加載
+        isLoading: false, // 設置狀態時，總是停止加載
         apiError: action.payload.error || null,
         apiSuccess: action.payload.success || null,
       };

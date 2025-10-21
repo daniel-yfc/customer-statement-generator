@@ -1,8 +1,10 @@
 import { Customer, MileslinesItem, ToshinItem } from '../types';
+// 1. 從 data.ts 額外匯入 mileslinesProducts
 import { customerList, mileslinesProducts } from '../data';
+import dayjs from 'dayjs';
 
-// --- STATE SHAPE ---
-export interface State {
+// 1. 定義 State 的形狀
+export interface StatementState {
   exchangeRate: number;
   statementDate: string;
   showMileslines: boolean;
@@ -17,8 +19,27 @@ export interface State {
   remarks: string[];
 }
 
-// --- INITIAL STATE ---
-export const initialState: State = {
+// 2. 定義 Actions 的類型
+type Action =
+  | { type: 'SET_FIELD'; payload: { field: keyof StatementState; value: any } }
+  | { type: 'SET_CUSTOMER'; payload: string }
+  | { type: 'UPDATE_CUSTOMER_DATA'; payload: { field: keyof Customer; value: string } }
+  | { type: 'ADD_MILESLINES_ITEM' }
+  | { type: 'UPDATE_MILESLINES_ITEM'; payload: { index: number; field: keyof MileslinesItem; value: any } }
+  | { type: 'REMOVE_MILESLINES_ITEM'; payload: number }
+  | { type: 'ADD_TOSHIN_ITEM' }
+  | { type: 'UPDATE_TOSHIN_ITEM'; payload: { index: number; field: keyof ToshinItem; value: any } }
+  | { type: 'REMOVE_TOSHIN_ITEM'; payload: number }
+  | { type: 'UPDATE_EXCHANGE_RATE'; payload: { rate: number; nextUpdate: number } }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'CLEAR_DATA' }
+  // 2. 新增缺失的 Action Types
+  | { type: 'UPDATE_MILESLINES_DESCRIPTION'; payload: { index: number; description: string } }
+  | { type: 'UPDATE_TOSHIN_DESCRIPTION'; payload: { index: number; description: string } };
+
+
+// 3. 初始狀態 (保持不變)
+export const initialState: StatementState = {
   exchangeRate: 0.208,
   statementDate: new Date().toISOString().split('T')[0],
   showMileslines: true,
@@ -30,54 +51,81 @@ export const initialState: State = {
   toshinItems: [],
   timeNextUpdate: 0,
   isLoading: false,
-  remarks: [''],
+  remarks: [],
 };
 
-// --- ACTION TYPES ---
-type Action =
-  | { type: 'SET_FIELD'; payload: { field: keyof State; value: any } }
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'UPDATE_EXCHANGE_RATE'; payload: { rate: number; nextUpdate: number } }
-  | { type: 'SET_CUSTOMER'; payload: string }
-  | { type: 'UPDATE_CUSTOMER_DATA'; payload: { field: keyof Customer; value: string } }
-  | { type: 'ADD_MILESLINES_ITEM' }
-  | { type: 'UPDATE_MILESLINES_ITEM'; payload: { index: number; field: keyof MileslinesItem; value: any } }
-  | { type: 'UPDATE_MILESLINES_DESCRIPTION'; payload: { index: number; description: string } }
-  | { type: 'REMOVE_MILESLINES_ITEM'; payload: number }
-  | { type: 'ADD_TOSHIN_ITEM' }
-  | { type: 'UPDATE_TOSHIN_ITEM'; payload: { index: number; field: keyof ToshinItem; value: any } }
-  | { type: 'UPDATE_TOSHIN_DESCRIPTION'; payload: { index: number; description: string } }
-  | { type: 'REMOVE_TOSHIN_ITEM'; payload: number }
-  | { type: 'UPDATE_REMARK'; payload: { index: number; value: string } }
-  | { type: 'CLEAR_DATA' };
-
-// --- REDUCER ---
-export function statementReducer(state: State, action: Action): State {
+// 4. Reducer 函數
+export const statementReducer = (state: StatementState, action: Action): StatementState => {
   switch (action.type) {
     case 'SET_FIELD':
       return { ...state, [action.payload.field]: action.payload.value };
-    
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
-
-    case 'UPDATE_EXCHANGE_RATE':
-      return { ...state, exchangeRate: action.payload.rate, timeNextUpdate: action.payload.nextUpdate };
 
     case 'SET_CUSTOMER': {
-      const name = action.payload;
-      const customer = customerList.find(c => c.name === name) || customerList[customerList.length - 1];
-      return { ...state, selectedCustomerName: name, customerData: customer };
+      const customerName = action.payload;
+      const customer = customerList.find(c => c.name === customerName) || customerList[customerList.length - 1];
+      return {
+        ...state,
+        selectedCustomerName: customerName,
+        customerData: customer,
+      };
     }
 
     case 'UPDATE_CUSTOMER_DATA':
-      return { ...state, customerData: { ...state.customerData, [action.payload.field]: action.payload.value } };
+      return {
+        ...state,
+        customerData: {
+          ...state.customerData,
+          [action.payload.field]: action.payload.value,
+        },
+      };
 
     case 'ADD_MILESLINES_ITEM':
-      return { ...state, mileslinesItems: [...state.mileslinesItems, { date: new Date().toISOString().split('T')[0], description: '酒石酸', quantity: 1, price: 0, isCustom: false, customDesc: '' }] };
-    
+      return {
+        ...state,
+        mileslinesItems: [
+          ...state.mileslinesItems,
+          { date: new Date().toISOString().split('T')[0], description: '酒石酸', quantity: 1, price: 0, isCustom: false, customDesc: '' }
+        ],
+      };
+
     case 'UPDATE_MILESLINES_ITEM':
-      return { ...state, mileslinesItems: state.mileslinesItems.map((item, i) => i === action.payload.index ? { ...item, [action.payload.field]: action.payload.value } : item) };
-    
+      return {
+        ...state,
+        mileslinesItems: state.mileslinesItems.map((item, index) =>
+          index === action.payload.index ? { ...item, [action.payload.field]: action.payload.value } : item
+        ),
+      };
+
+    case 'REMOVE_MILESLINES_ITEM':
+      return {
+        ...state,
+        mileslinesItems: state.mileslinesItems.filter((_, index) => index !== action.payload),
+      };
+
+    case 'ADD_TOSHIN_ITEM':
+      return {
+        ...state,
+        toshinItems: [
+          ...state.toshinItems,
+          { date: new Date().toISOString().split('T')[0], description: '', quantity: 1, priceJPY: 0, isCustom: false, isShipping: false, customDesc: '', model: '', shippingCarrier: '' }
+        ],
+      };
+
+    case 'UPDATE_TOSHIN_ITEM':
+      return {
+        ...state,
+        toshinItems: state.toshinItems.map((item, index) =>
+          index === action.payload.index ? { ...item, [action.payload.field]: action.payload.value } : item
+        ),
+      };
+
+    case 'REMOVE_TOSHIN_ITEM':
+      return {
+        ...state,
+        toshinItems: state.toshinItems.filter((_, index) => index !== action.payload),
+      };
+
+    // 3. 新增缺失的業務邏輯
     case 'UPDATE_MILESLINES_DESCRIPTION': {
       const { index, description } = action.payload;
       const product = mileslinesProducts.find(p => p.description === description);
@@ -85,16 +133,7 @@ export function statementReducer(state: State, action: Action): State {
       const price = (product && !isCustom) ? product.price : state.mileslinesItems[index].price;
       return { ...state, mileslinesItems: state.mileslinesItems.map((item, i) => i === index ? { ...item, description, isCustom, price } : item) };
     }
-      
-    case 'REMOVE_MILESLINES_ITEM':
-      return { ...state, mileslinesItems: state.mileslinesItems.filter((_, i) => i !== action.payload) };
-
-    case 'ADD_TOSHIN_ITEM':
-      return { ...state, toshinItems: [...state.toshinItems, { date: new Date().toISOString().split('T')[0], description: '', quantity: 1, priceJPY: 0, isCustom: false, isShipping: false, customDesc: '', model: '', shippingCarrier: '' }] };
-
-    case 'UPDATE_TOSHIN_ITEM':
-      return { ...state, toshinItems: state.toshinItems.map((item, i) => i === action.payload.index ? { ...item, [action.payload.field]: action.payload.value } : item) };
-
+    
     case 'UPDATE_TOSHIN_DESCRIPTION': {
       const { index, description } = action.payload;
       const isShipping = description.startsWith('運費 >');
@@ -103,24 +142,21 @@ export function statementReducer(state: State, action: Action): State {
       return { ...state, toshinItems: state.toshinItems.map((item, i) => i === index ? { ...item, description, isShipping, isCustom, shippingCarrier } : item) };
     }
 
-    case 'REMOVE_TOSHIN_ITEM':
-      return { ...state, toshinItems: state.toshinItems.filter((_, i) => i !== action.payload) };
+    case 'UPDATE_EXCHANGE_RATE':
+      return {
+        ...state,
+        exchangeRate: action.payload.rate,
+        timeNextUpdate: action.payload.nextUpdate,
+      };
 
-    case 'UPDATE_REMARK': {
-        const newRemarks = [...state.remarks];
-        newRemarks[action.payload.index] = action.payload.value;
-        // If the last remark is being edited, add a new empty one
-        if (action.payload.index === state.remarks.length - 1 && action.payload.value !== '') {
-            newRemarks.push('');
-        }
-        return { ...state, remarks: newRemarks };
-    }
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
 
     case 'CLEAR_DATA':
-        localStorage.removeItem('statementState');
-        return initialState;
+      // 清除 localStorage 的操作由 usePersistentReducer Hook 處理
+      return { ...initialState };
 
     default:
       return state;
   }
-}
+};

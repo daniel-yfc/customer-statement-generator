@@ -74,24 +74,11 @@ const CustomerStatementGenerator: React.FC = () => {
   }, [dispatch]);
 
   const handleMileslinesDescriptionChange = useCallback((index: number, description: string) => {
-    const product = mileslinesProducts.find(p => p.description === description);
-    const isCustom = description === '自行輸入';
-    dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field: 'description', value: description } });
-    dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field: 'isCustom', value: isCustom } });
-    if (product && !isCustom) {
-      dispatch({ type: 'UPDATE_MILESLINES_ITEM', payload: { index, field: 'price', value: product.price } });
-    }
+    dispatch({ type: 'UPDATE_MILESLINES_DESCRIPTION', payload: { index, description } });
   }, [dispatch]);
 
   const handleToshinDescriptionChange = useCallback((index: number, description: string) => {
-    const isShipping = description.startsWith('運費 >');
-    const isCustom = description === '自行輸入';
-    dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field: 'description', value: description } });
-    dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field: 'isShipping', value: isShipping } });
-    dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field: 'isCustom', value: isCustom } });
-    if (isShipping) {
-      dispatch({ type: 'UPDATE_TOSHIN_ITEM', payload: { index, field: 'shippingCarrier', value: description.split(' > ')[1] } });
-    }
+    dispatch({ type: 'UPDATE_TOSHIN_DESCRIPTION', payload: { index, description } });
   }, [dispatch]);
 
   const formatNumber = (num: number): string => new Intl.NumberFormat('zh-TW').format(Math.round(num));
@@ -239,4 +226,5 @@ const CustomerStatementGenerator: React.FC = () => {
 };
 
 export default CustomerStatementGenerator;
+
 

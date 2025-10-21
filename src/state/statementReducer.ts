@@ -1,7 +1,7 @@
 import { Customer, MileslinesItem, ToshinItem } from '../types';
 // 1. 從 data.ts 額外匯入 mileslinesProducts
 import { customerList, mileslinesProducts } from '../data';
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs';
 
 // 1. 定義 State 的形狀
 export interface StatementState {
@@ -17,28 +17,64 @@ export interface StatementState {
   timeNextUpdate: number;
   isLoading: boolean;
   remarks: string[];
+  // [Warning #4] 新增 API 狀態欄位
+  apiError: string | null;
+  apiSuccess: string | null;
 }
 
-// 2. 定義 Actions 的類型
-type Action =
-  | { type: 'SET_FIELD'; payload: { field: keyof StatementState; value: any } }
+// [Warning #3] (Typescript pro)
+// 為了實現類型安全的 reducer，我們使用「映射類型 (Mapped Types)」
+// 來創建可辨識的聯合類型 (Discriminated Union)
+
+type SetFieldAction = {
+  [K in keyof StatementState]: {
+    type: 'SET_FIELD';
+    payload: { field: K; value: StatementState[K] };
+  };
+}[keyof StatementState]; // 將映射類型轉換為聯合類型
+
+type UpdateCustomerDataAction = {
+  [K in keyof Customer]: {
+    type: 'UPDATE_CUSTOMER_DATA';
+    payload: { field: K; value: Customer[K] };
+  };
+}[keyof Customer];
+
+type UpdateMileslinesItemAction = {
+  [K in keyof MileslinesItem]: {
+    type: 'UPDATE_MILESLINES_ITEM';
+    payload: { index: number; field: K; value: MileslinesItem[K] };
+  };
+}[keyof MileslinesItem];
+
+type UpdateToshinItemAction = {
+  [K in keyof ToshinItem]: {
+    type: 'UPDATE_TOSHIN_ITEM';
+    payload: { index: number; field: K; value: ToshinItem[K] };
+  };
+}[keyof ToshinItem];
+
+// 2. 定義 Actions 的類型 (現在完全類型安全)
+export type StatementAction =
+  | SetFieldAction
+  | UpdateCustomerDataAction
+  | UpdateMileslinesItemAction
+  | UpdateToshinItemAction
   | { type: 'SET_CUSTOMER'; payload: string }
-  | { type: 'UPDATE_CUSTOMER_DATA'; payload: { field: keyof Customer; value: string } }
   | { type: 'ADD_MILESLINES_ITEM' }
-  | { type: 'UPDATE_MILESLINES_ITEM'; payload: { index: number; field: keyof MileslinesItem; value: any } }
   | { type: 'REMOVE_MILESLINES_ITEM'; payload: number }
   | { type: 'ADD_TOSHIN_ITEM' }
-  | { type: 'UPDATE_TOSHIN_ITEM'; payload: { index: number; field: keyof ToshinItem; value: any } }
   | { type: 'REMOVE_TOSHIN_ITEM'; payload: number }
   | { type: 'UPDATE_EXCHANGE_RATE'; payload: { rate: number; nextUpdate: number } }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'CLEAR_DATA' }
-  // 2. 新增缺失的 Action Types
   | { type: 'UPDATE_MILESLINES_DESCRIPTION'; payload: { index: number; description: string } }
-  | { type: 'UPDATE_TOSHIN_DESCRIPTION'; payload: { index: number; description: string } };
+  | { type: 'UPDATE_TOSHIN_DESCRIPTION'; payload: { index: number; description: string } }
+  // [Warning #4] 新增 API 狀態 Actions
+  | { type: 'SET_API_STATUS'; payload: { error?: string | null; success?: string | null } }
+  | { type: 'CLEAR_API_STATUS' };
 
-
-// 3. 初始狀態 (保持不變)
+// 3. 初始狀態
 export const initialState: StatementState = {
   exchangeRate: 0.208,
   statementDate: new Date().toISOString().split('T')[0],
@@ -52,12 +88,17 @@ export const initialState: StatementState = {
   timeNextUpdate: 0,
   isLoading: false,
   remarks: [],
+  // [Warning #4] 初始化 API 狀態
+  apiError: null,
+  apiSuccess: null,
 };
 
 // 4. Reducer 函數
-export const statementReducer = (state: StatementState, action: Action): StatementState => {
+export const statementReducer = (state: StatementState, action: StatementAction): StatementState => {
   switch (action.type) {
     case 'SET_FIELD':
+      // [Warning #3] 現在 'action.payload.value' 的類型
+      // 會根據 'action.payload.field' 自動推斷，完全類型安全
       return { ...state, [action.payload.field]: action.payload.value };
 
     case 'SET_CUSTOMER': {
@@ -71,6 +112,7 @@ export const statementReducer = (state: StatementState, action: Action): Stateme
     }
 
     case 'UPDATE_CUSTOMER_DATA':
+      // [Warning #3] 類型安全
       return {
         ...state,
         customerData: {
@@ -89,6 +131,7 @@ export const statementReducer = (state: StatementState, action: Action): Stateme
       };
 
     case 'UPDATE_MILESLINES_ITEM':
+      // [Warning #3] 類型安全
       return {
         ...state,
         mileslinesItems: state.mileslinesItems.map((item, index) =>
@@ -112,6 +155,7 @@ export const statementReducer = (state: StatementState, action: Action): Stateme
       };
 
     case 'UPDATE_TOSHIN_ITEM':
+      // [Warning #3] 類型安全
       return {
         ...state,
         toshinItems: state.toshinItems.map((item, index) =>
@@ -125,7 +169,6 @@ export const statementReducer = (state: StatementState, action: Action): Stateme
         toshinItems: state.toshinItems.filter((_, index) => index !== action.payload),
       };
 
-    // 3. 新增缺失的業務邏輯
     case 'UPDATE_MILESLINES_DESCRIPTION': {
       const { index, description } = action.payload;
       const product = mileslinesProducts.find(p => p.description === description);
@@ -150,11 +193,32 @@ export const statementReducer = (state: StatementState, action: Action): Stateme
       };
 
     case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
+      // [Warning #4] 開始加載時，清除舊的狀態訊息
+      return { 
+        ...state, 
+        isLoading: action.payload, 
+        apiError: null, 
+        apiSuccess: null 
+      };
 
     case 'CLEAR_DATA':
-      // 清除 localStorage 的操作由 usePersistentReducer Hook 處理
       return { ...initialState };
+
+    // [Warning #4] 新增 Reducer Cases
+    case 'SET_API_STATUS':
+      return {
+        ...state,
+        isLoading: false, // 設置狀態時，停止加載
+        apiError: action.payload.error || null,
+        apiSuccess: action.payload.success || null,
+      };
+    
+    case 'CLEAR_API_STATUS':
+      return {
+        ...state,
+        apiError: null,
+        apiSuccess: null,
+      };
 
     default:
       return state;

@@ -1,4 +1,4 @@
-// src/components/CustomerStatementGenerator.tsx
+pm// src/components/CustomerStatementGenerator.tsx
 import React, { useCallback, useEffect } from 'react';
 import { statementReducer, initialState } from '../state/statementReducer';
 import { usePersistentReducer } from '../hooks/usePersistentReducer';
@@ -174,15 +174,22 @@ const CustomerStatementGenerator: React.FC = () => {
             </div>
           </div>
         </header>
-          // src/components/CustomerStatementGenerator.tsx (Fixed)
-          // 註解：onCustomerDataChange 的 'field' 參數已由 CustomerInfo.tsx 
-          // 確保為 'keyof Customer' 類型，
-          // 這與 'UPDATE_CUSTOMER_DATA' action 的 payload 類型相符。
-          // 移除先前導致 TS2367 錯誤的多餘 if 判斷。
-onCustomerDataChange={(field, value) => {
+// src/components/CustomerStatementGenerator.tsx (Fixed)
+        <CustomerInfo 
+          customerList={customerList} 
+          selectedCustomerName={selectedCustomerName} 
+          customerData={customerData} 
+          isEditable={selectedCustomerName === '自行輸入'} 
+          onCustomerChange={(name) => dispatch({ type: 'SET_CUSTOMER', payload: name })} 
+          // 註解：onCustomerDataChange 回調是類型安全的。
+          // 'field' (keyof Customer) 和 'value' (string)
+          // 與 'UPDATE_CUSTOMER_DATA' action 的 payload 類型匹配。
+          // 移除導致 TS2367 錯誤的多餘 if 判斷。
+          onCustomerDataChange={(field, value) => {
             dispatch({ type: 'UPDATE_CUSTOMER_DATA', payload: { field, value } });
           }}
         />
+
         
         {showMileslines && (
           <MileslinesSection

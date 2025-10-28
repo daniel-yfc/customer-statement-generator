@@ -41,18 +41,22 @@ type UpdateCustomerDataAction = {
 };
 
 type UpdateMileslinesItemAction = {
-  [K in keyof MileslinesItem]: {
-    type: 'UPDATE_MILESLINES_ITEM';
-    payload: { index: number; field: K; value: MileslinesItem[K] };
+  type: 'UPDATE_MILESLINES_ITEM';
+  payload: {
+    index: number;
+    field: keyof MileslinesItem;
+    value: MileslinesItem[keyof MileslinesItem]; // 這將是 'string' | 'number' | 'boolean'
   };
-}[keyof MileslinesItem];
+};
 
 type UpdateToshinItemAction = {
-  [K in keyof ToshinItem]: {
-    type: 'UPDATE_TOSHIN_ITEM';
-    payload: { index: number; field: K; value: ToshinItem[K] };
+  type: 'UPDATE_TOSHIN_ITEM';
+  payload: {
+    index: number;
+    field: keyof ToshinItem;
+    value: ToshinItem[keyof ToshinItem]; // 這將是 'string' | 'number' | 'boolean'
   };
-}[keyof ToshinItem];
+};
 
 
 // 2. 定義 Actions 的類型 (現在完全類型安全)
@@ -224,4 +228,5 @@ export const statementReducer = (state: StatementState, action: StatementAction)
       return state;
   }
 };
+
 

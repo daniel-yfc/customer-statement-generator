@@ -80,8 +80,8 @@ const ToshinSection: React.FC<Props> = ({ items, exchangeRate, services, onAddIt
                   <td className="py-1 px-2 text-right">
     <CurrencyDisplay 
         currency="$" 
-        amount={formatNumber(subtotalTWD)} 
-        formatNumber={formatNumber} 
+        amount={subtotalTWD} // [修復] 傳遞原始 number
+        formatNumber={formatNumber}
     />
 </td>
                   <td className="py-1 px-2 text-center no-print"><button className="text-red-500 hover:text-red-700" onClick={() => onRemoveItem(index)}><Trash2 size={16} /></button></td>
@@ -95,5 +95,6 @@ const ToshinSection: React.FC<Props> = ({ items, exchangeRate, services, onAddIt
     </div>
   );
 };
+
 
 export default React.memo(ToshinSection);

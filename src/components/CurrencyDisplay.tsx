@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 interface Props {
   currency: string;
-  amount?: string;
+  amount?: number; // [修復] 類型嚴格限制為 number
   isInput?: boolean;
   value?: number;
   onChange?: (value: number) => void;
@@ -53,7 +53,8 @@ export const CurrencyDisplay: React.FC<Props> = React.memo(({ currency, amount, 
   return (
     <div className={`grid grid-cols-[min-content_1fr] gap-x-1 items-baseline text-right w-full ${className}`}>
       <span className="text-gray-700">{currency}</span>
-      <span className="font-medium text-gray-800">{amount}</span>
+      <span className="font-medium text-gray-800">{formatNumber(amount ?? 0)}</span>
     </div>
   );
+
 });

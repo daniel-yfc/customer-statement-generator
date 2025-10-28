@@ -33,11 +33,12 @@ type SetFieldAction = {
 }[keyof StatementState]; // 將映射類型轉換為聯合類型
 
 type UpdateCustomerDataAction = {
-  [K in keyof Customer]: {
-    type: 'UPDATE_CUSTOMER_DATA';
-    payload: { field: K; value: Customer[K] };
+  type: 'UPDATE_CUSTOMER_DATA';
+  payload: {
+    field: keyof Customer;
+    value: Customer[keyof Customer]; // 這將被推論為 'string'
   };
-}[keyof Customer];
+};
 
 type UpdateMileslinesItemAction = {
   [K in keyof MileslinesItem]: {
@@ -223,3 +224,4 @@ export const statementReducer = (state: StatementState, action: StatementAction)
       return state;
   }
 };
+

@@ -152,9 +152,10 @@ export const statementReducer = (state: StatementState, action: Action): Stateme
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
 
+// 修復
     case 'CLEAR_DATA':
-      // 清除 localStorage 的操作由 usePersistentReducer Hook 處理
-      return { ...initialState };
+      // [修復] 實現註解的意圖：保留當前 state 中的日期，而不是重置為初始日期
+      return { ...initialState, statementDate: state.statementDate }; // 保留日期
 
     default:
       return state;

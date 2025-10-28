@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 
 interface Props {
-  currency: string;
+  currency: number;
   amount?: number;
   isInput?: boolean;
   value?: number;
@@ -59,3 +59,4 @@ export const CurrencyDisplay: React.FC<Props> = React.memo(({ currency, amount, 
   );
 
 });
+

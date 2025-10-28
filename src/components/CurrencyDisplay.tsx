@@ -39,16 +39,6 @@ export const CurrencyDisplay: React.FC<Props> = React.memo(({ currency, amount, 
         </div>
       );
     }
-    return (
-      <div
-        className={`grid grid-cols-[min-content_1fr] gap-x-1 items-baseline text-right w-full cursor-pointer p-1 rounded-lg hover:bg-gray-100 ${className}`}
-        onClick={() => setIsEditing(true)}
-      >
-        <span className="text-gray-700">{currency}</span>
-        <span className="font-medium text-gray-800">{formatNumber(value)}</span>
-      </div>
-    );
-  }
 
   return (
     <div className={`grid grid-cols-[min-content_1fr] gap-x-1 items-baseline text-right w-full ${className}`}>
@@ -59,3 +49,4 @@ export const CurrencyDisplay: React.FC<Props> = React.memo(({ currency, amount, 
   );
 
 });
+

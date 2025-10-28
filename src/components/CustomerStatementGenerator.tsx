@@ -1,4 +1,3 @@
-pm// src/components/CustomerStatementGenerator.tsx
 import React, { useCallback, useEffect } from 'react';
 import { statementReducer, initialState } from '../state/statementReducer';
 import { usePersistentReducer } from '../hooks/usePersistentReducer';
@@ -275,6 +274,7 @@ const CustomerStatementGenerator: React.FC = () => {
 };
 
 export default CustomerStatementGenerator;
+
 
 
 

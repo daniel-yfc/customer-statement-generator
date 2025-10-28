@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 interface Props {
   currency: string;
-  amount?: string;
+  amount?: number;
   isInput?: boolean;
   value?: number;
   onChange?: (value: number) => void;
@@ -57,4 +57,5 @@ export const CurrencyDisplay: React.FC<Props> = React.memo(({ currency, amount, 
       <span className="font-medium text-gray-800">{formatNumber(amount ?? 0)}</span>
     </div>
   );
+
 });

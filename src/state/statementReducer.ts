@@ -206,8 +206,9 @@ export const statementReducer = (state: StatementState, action: StatementAction)
       };
 
     case 'CLEAR_DATA':
-      return { ...initialState, statementDate: initialState.statementDate }; // 保留日期
-
+      // [修復] 實現註解的意圖：保留當前 state 中的日期
+      return { ...initialState, statementDate: state.statementDate }; // 保留日期
+      
     // [Warning #4] 新增 Reducer Cases
     case 'SET_API_STATUS':
       return {
@@ -228,5 +229,6 @@ export const statementReducer = (state: StatementState, action: StatementAction)
       return state;
   }
 };
+
 
 

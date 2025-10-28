@@ -13,7 +13,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { customerList, mileslinesProducts, toshinServices } from '../data';
-import '../fonts';
+//import '../fonts';
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -274,6 +274,7 @@ const CustomerStatementGenerator: React.FC = () => {
 };
 
 export default CustomerStatementGenerator;
+
 
 
 

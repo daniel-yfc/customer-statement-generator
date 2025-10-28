@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import './fonts'; // [修復] 在應用程式入口點立即註冊字體，優化 PDF 首次生成速度
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

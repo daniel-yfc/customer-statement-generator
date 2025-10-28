@@ -13,7 +13,9 @@ export const usePersistentReducer = <S, A>(
       const storedState = localStorage.getItem(storageKey);
       return storedState ? JSON.parse(storedState) : initialState;
     } catch (error) {
-      console.error("Failed to parse state from localStorage:", error);
+      console.error("Failed to parse state from localStorage, resetting state:", error);
+      // [修復] 在解析失敗時自動清除損壞的 state，防止無限錯誤循環
+      localStorage.removeItem(storageKey);
       return initialState;
     }
   };
@@ -42,4 +44,5 @@ export const usePersistentReducer = <S, A>(
 
   return [state, enhancedDispatch];
 };
+
 

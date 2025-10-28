@@ -214,7 +214,6 @@ const CustomerStatementGenerator: React.FC = () => {
             onShowModal={() => dispatch({ type: 'SET_FIELD', payload: { field: 'showModal', value: true } })}
             formatNumber={formatNumber}
             showTopBorder={showMileslines}
-            toshinTotalJPY={toshinTotalJPY}
           />
         )}
         
@@ -274,6 +273,7 @@ const CustomerStatementGenerator: React.FC = () => {
 };
 
 export default CustomerStatementGenerator;
+
 
 
 

@@ -36,7 +36,7 @@ type UpdateCustomerDataAction = {
   type: 'UPDATE_CUSTOMER_DATA';
   payload: {
     field: keyof Customer;
-    value: Customer[keyof Customer]; // 這將被推論為 'string'
+    value: string;
   };
 };
 
@@ -228,5 +228,6 @@ export const statementReducer = (state: StatementState, action: StatementAction)
       return state;
   }
 };
+
 
 

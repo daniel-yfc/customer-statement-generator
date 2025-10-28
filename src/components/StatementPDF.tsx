@@ -2,7 +2,7 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { Customer, MileslinesItem, ToshinItem } from '../types';
-import '../fonts'; 
+// import '../fonts'; // [修復] 已將此行移至 index.tsx
 
 // Props for the PDF document
 interface StatementPDFProps {
@@ -68,5 +68,6 @@ const StatementPDF: React.FC<StatementPDFProps> = ({ customerData, mileslinesIte
         </Page>
     </Document>
 );
+
 
 export default StatementPDF;

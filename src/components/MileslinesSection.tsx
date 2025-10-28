@@ -48,7 +48,7 @@ const MileslinesSection: React.FC<Props> = ({ items, products, onAddItem, onUpda
                 </td>
                 <td className="py-1 px-2 text-right"><input type="number" min="0" className="bg-gray-50 border-gray-300 text-gray-900 text-base rounded-lg p-1 w-full text-right border" value={item.quantity} onChange={(e) => onUpdateItem(index, 'quantity', Math.max(0, parseInt(e.target.value, 10) || 0))} /></td>
                 <td className="py-1 px-2 text-right"><CurrencyDisplay currency="$" isInput={true} value={item.price} onChange={(value) => onUpdateItem(index, 'price', value)} formatNumber={formatNumber} /></td>
-                <td className="py-1 px-2 text-right"><CurrencyDisplay currency="$" amount={formatNumber(item.quantity * item.price)} formatNumber={formatNumber}/></td>
+                <td className="py-1 px-2 text-right"><CurrencyDisplay currency="$" amount={item.quantity * item.price} formatNumber={formatNumber}/></td>
                 <td className="py-1 px-2 text-center no-print"><button className="text-red-500 hover:text-red-700" onClick={() => onRemoveItem(index)}><Trash2 size={16} /></button></td>
               </tr>
             ))}
@@ -59,5 +59,6 @@ const MileslinesSection: React.FC<Props> = ({ items, products, onAddItem, onUpda
     </div>
   );
 };
+
 
 export default React.memo(MileslinesSection);
